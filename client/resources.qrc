@@ -116,6 +116,10 @@
         <file>server_scripts/socks5_proxy/Dockerfile</file>
         <file>server_scripts/socks5_proxy/run_container.sh</file>
         <file>server_scripts/socks5_proxy/start.sh</file>
+        <file>server_scripts/ssh_tunnel/configure_container.sh</file>
+        <file>server_scripts/ssh_tunnel/Dockerfile</file>
+        <file>server_scripts/ssh_tunnel/run_container.sh</file>
+        <file>server_scripts/ssh_tunnel/start.sh</file>
         <file>server_scripts/website_tor/configure_container.sh</file>
         <file>server_scripts/website_tor/Dockerfile</file>
         <file>server_scripts/website_tor/run_container.sh</file>
@@ -205,6 +209,7 @@
         <file>ui/qml/Pages2/PageProtocolOpenVpnSettings.qml</file>
         <file>ui/qml/Pages2/PageProtocolRaw.qml</file>
         <file>ui/qml/Pages2/PageProtocolShadowSocksSettings.qml</file>
+        <file>ui/qml/Pages2/PageProtocolSshTunnelSettings.qml</file>
         <file>ui/qml/Pages2/PageProtocolWireGuardSettings.qml</file>
         <file>ui/qml/Pages2/PageProtocolXraySettings.qml</file>
         <file>ui/qml/Pages2/PageServiceDnsSettings.qml</file>

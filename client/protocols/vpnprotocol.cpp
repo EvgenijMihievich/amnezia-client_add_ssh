@@ -11,6 +11,9 @@
     #include "wireguardprotocol.h"
     #include "xrayprotocol.h"
 #endif
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_WIN)
+    #include "sshvpnprotocol.h"
+#endif
 
 #ifdef Q_OS_WINDOWS
     #include "ikev2_vpn_protocol_windows.h"
@@ -123,6 +126,9 @@ VpnProtocol *VpnProtocol::factory(DockerContainer container, const QJsonObject &
     case DockerContainer::Awg: return new WireguardProtocol(configuration);
     case DockerContainer::Xray: return new XrayProtocol(configuration);
     case DockerContainer::SSXray: return new XrayProtocol(configuration);
+#endif
+#if (defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)) || defined(Q_OS_WIN)
+    case DockerContainer::SshTunnel: return new SshVpnProtocol(configuration);
 #endif
     default: return nullptr;
     }

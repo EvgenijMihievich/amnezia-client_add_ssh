@@ -77,6 +77,8 @@ QVector<amnezia::Proto> ContainerProps::protocolsForContainer(amnezia::DockerCon
 
     case DockerContainer::Socks5Proxy: return { Proto::Socks5Proxy };
 
+    case DockerContainer::SshTunnel: return { Proto::SshTunnel };
+
     case DockerContainer::Awg: return { Proto::Awg };
     case DockerContainer::Awg2: return { Proto::Awg };
     default: return { defaultProtocol(container) };
@@ -110,7 +112,8 @@ QMap<DockerContainer, QString> ContainerProps::containerHumanNames()
              { DockerContainer::TorWebSite, QObject::tr("Website in Tor network") },
              { DockerContainer::Dns, QObject::tr("AmneziaDNS") },
              { DockerContainer::Sftp, QObject::tr("SFTP file sharing service") },
-             { DockerContainer::Socks5Proxy, QObject::tr("SOCKS5 proxy server") } };
+             { DockerContainer::Socks5Proxy, QObject::tr("SOCKS5 proxy server") },
+             { DockerContainer::SshTunnel, QObject::tr("SSH tunnel") } };
 }
 
 QMap<DockerContainer, QString> ContainerProps::containerDescriptions()
@@ -145,7 +148,9 @@ QMap<DockerContainer, QString> ContainerProps::containerDescriptions()
              { DockerContainer::Sftp,
                QObject::tr("Create a file vault on your server to securely store and transfer files.") },
              { DockerContainer::Socks5Proxy,
-               QObject::tr("") } };
+               QObject::tr("") },
+             { DockerContainer::SshTunnel,
+               QObject::tr("SSH dynamic port forwarding (SOCKS5) on the server; the desktop client forwards all traffic through it using a TUN interface.") } };
 }
 
 QMap<DockerContainer, QString> ContainerProps::containerDetailedDescriptions()
@@ -237,7 +242,9 @@ QMap<DockerContainer, QString> ContainerProps::containerDetailedDescriptions()
                       "You will be able to access it using\n FileZilla or other SFTP clients, "
                       "as well as mount the disk on your device to access\n it directly from your device.\n\n"
                       "For more detailed information, you can\n find it in the support section under \"Create SFTP file storage.\" ") },
-        { DockerContainer::Socks5Proxy, QObject::tr("SOCKS5 proxy server") }
+        { DockerContainer::Socks5Proxy, QObject::tr("SOCKS5 proxy server") },
+        { DockerContainer::SshTunnel,
+          QObject::tr("SSH tunnel VPN uses OpenSSH dynamic forwarding (-D) and a local TUN adapter. It is slower than WireGuard but works where other protocols are blocked. On Windows, the OpenSSH client (ssh.exe) must be installed.") }
     };
 }
 
@@ -264,6 +271,7 @@ Proto ContainerProps::defaultProtocol(DockerContainer c)
     case DockerContainer::Dns: return Proto::Dns;
     case DockerContainer::Sftp: return Proto::Sftp;
     case DockerContainer::Socks5Proxy: return Proto::Socks5Proxy;
+    case DockerContainer::SshTunnel: return Proto::SshTunnel;
     default: return Proto::Any;
     }
 }
@@ -316,6 +324,7 @@ bool ContainerProps::isSupportedByCurrentPlatform(DockerContainer c)
     switch (c) {
     case DockerContainer::WireGuard: return true;
     case DockerContainer::Ipsec: return false;
+    case DockerContainer::SshTunnel: return false;
     default: return true;
     }
 
@@ -329,6 +338,7 @@ bool ContainerProps::isSupportedByCurrentPlatform(DockerContainer c)
     case DockerContainer::Cloak: return true;
     case DockerContainer::Xray: return true;
     case DockerContainer::SSXray: return true;
+    case DockerContainer::SshTunnel: return true;
     default: return false;
     }
 
@@ -391,6 +401,7 @@ bool ContainerProps::isShareable(DockerContainer container)
     case DockerContainer::Dns: return false;
     case DockerContainer::Sftp: return false;
     case DockerContainer::Socks5Proxy: return false;
+    case DockerContainer::SshTunnel: return false;
     default: return true;
     }
 }
@@ -422,6 +433,7 @@ int ContainerProps::installPageOrder(DockerContainer container)
     case DockerContainer::Xray: return 3;
     case DockerContainer::Ipsec: return 7;
     case DockerContainer::SSXray: return 8;
+    case DockerContainer::SshTunnel: return 9;
     default: return 0;
     }
 }

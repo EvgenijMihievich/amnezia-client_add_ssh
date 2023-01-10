@@ -7,6 +7,10 @@ AmneziaVPN_*.exe
 deploy/build/*
 deploy/build_32/*
 deploy/build_64/*
+# Large optional blob for Docker Android build (keep local only; see deploy/Dockerfile.android)
+deploy/docker-android-cache/commandlinetools-linux-11076708_latest.zip
+# Local venv for aqtinstall / Qt tooling under deploy/
+deploy/.aqt-venv/
 winbuild*.bat
 .cache/
 .vscode/

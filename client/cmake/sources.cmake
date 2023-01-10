@@ -202,6 +202,10 @@ if(WIN32 OR (APPLE AND NOT IOS AND NOT MACOS_NE) OR (LINUX AND NOT ANDROID))
         ${CLIENT_ROOT_DIR}/protocols/xrayprotocol.cpp
         ${CLIENT_ROOT_DIR}/protocols/awgprotocol.cpp
     )
+    if(LINUX OR WIN32)
+        list(APPEND HEADERS ${CLIENT_ROOT_DIR}/protocols/sshvpnprotocol.h)
+        list(APPEND SOURCES ${CLIENT_ROOT_DIR}/protocols/sshvpnprotocol.cpp)
+    endif()
 endif()
 
 if(APPLE AND MACOS_NE)
