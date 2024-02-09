@@ -27,5 +27,11 @@ sudo sysctl net.ipv4.tcp_fastopen=3; \
 sudo sysctl net.ipv4.tcp_mem="25600 51200 102400"; \
 sudo sysctl net.ipv4.tcp_rmem="4096 87380 67108864"; \
 sudo sysctl net.ipv4.tcp_wmem="4096 65536 67108864"; \
-sudo sysctl net.ipv4.tcp_mtu_probing=1; \
-sudo sysctl net.ipv4.tcp_congestion_control=hybla
+sudo sysctl net.ipv4.tcp_mtu_probing=1
+# Prefer BBR when the kernel supports it; persist for reboots. Fallback: cubic (typical default).
+if [ -r /proc/sys/net/ipv4/tcp_available_congestion_control ] && grep -qw bbr /proc/sys/net/ipv4/tcp_available_congestion_control 2>/dev/null; then
+	sudo sysctl -w net.ipv4.tcp_congestion_control=bbr
+	echo 'net.ipv4.tcp_congestion_control=bbr' | sudo tee /etc/sysctl.d/99-amnezia-tcp-bbr.conf >/dev/null
+else
+	sudo sysctl -w net.ipv4.tcp_congestion_control=cubic
+fi
