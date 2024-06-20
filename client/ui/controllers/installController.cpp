@@ -151,6 +151,9 @@ void InstallController::install(DockerContainer container, int port, TransportPr
             } else if (container == DockerContainer::Socks5Proxy) {
                 containerConfig.insert(config_key::userName, protocols::socks5Proxy::defaultUserName);
                 containerConfig.insert(config_key::password, Utils::getRandomString(16));
+            } else if (container == DockerContainer::SshTunnel) {
+                containerConfig.insert(config_key::userName, protocols::sshTunnel::defaultUserName);
+                containerConfig.insert(config_key::password, Utils::getRandomString(20));
             }
 
             config.insert(config_key::container, ContainerProps::containerToString(container));

@@ -95,7 +95,8 @@ PageLoader::PageEnum ProtocolsModel::serverProtocolPage(Proto protocol) const
     case Proto::Ikev2: return PageLoader::PageEnum::PageProtocolIKev2Settings;
     case Proto::L2tp: return PageLoader::PageEnum::PageProtocolIKev2Settings;
     case Proto::Xray: return PageLoader::PageEnum::PageProtocolXraySettings;
-    
+    case Proto::SshTunnel: return PageLoader::PageEnum::PageProtocolSshTunnelSettings;
+
     // non-vpn
     case Proto::TorWebSite: return PageLoader::PageEnum::PageServiceTorWebsiteSettings;
     case Proto::Dns: return PageLoader::PageEnum::PageServiceDnsSettings;

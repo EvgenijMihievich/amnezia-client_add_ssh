@@ -9,6 +9,10 @@ import "TextTypes"
 Item {
     id: root
 
+    ContextMenuType {
+        id: textFieldContextMenu
+    }
+
     property string headerText
     property string headerTextDisabledColor: AmneziaStyle.color.charcoalGray
     property string headerTextColor: AmneziaStyle.color.mutedGray
@@ -134,8 +138,20 @@ Item {
                             }
                         }
 
-                        ContextMenu.menu: ContextMenuType {
-                            textObj: textField
+                        // ContextMenu.menu is Qt 6.9+; use TapHandler + Menu for Qt 6.4 (Ubuntu 24.04).
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            onTapped: {
+                                textFieldContextMenu.textObj = textField
+                                textFieldContextMenu.popup()
+                            }
+                        }
+                        Keys.onPressed: function (event) {
+                            if (event.key === Qt.Key_Menu) {
+                                textFieldContextMenu.textObj = textField
+                                textFieldContextMenu.popup()
+                                event.accepted = true
+                            }
                         }
 
                         onFocusChanged: {

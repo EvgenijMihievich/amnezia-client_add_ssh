@@ -5,7 +5,10 @@ SitesModel::SitesModel(std::shared_ptr<Settings> settings, QObject *parent)
 {
     m_isSplitTunnelingEnabled = m_settings->isSitesSplitTunnelingEnabled();
     m_currentRouteMode = m_settings->routeMode();
-    if (m_currentRouteMode == Settings::VpnAllSites) { // for old split tunneling configs
+    // Legacy configs had split tunneling on with routeMode "all sites". Only rewrite when split is actually enabled,
+    // otherwise we would persist VpnOnlyForwardSites while appendSplitTunnelingConfig ignores routeMode (full tunnel)
+    // and the UI looks out of sync with real routing.
+    if (m_isSplitTunnelingEnabled && m_currentRouteMode == Settings::VpnAllSites) {
         m_settings->setRouteMode(static_cast<Settings::RouteMode>(Settings::VpnOnlyForwardSites));
         m_currentRouteMode = Settings::VpnOnlyForwardSites;
     }

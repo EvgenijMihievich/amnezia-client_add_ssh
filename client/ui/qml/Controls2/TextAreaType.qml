@@ -6,6 +6,10 @@ import Style 1.0
 Rectangle {
     id: root
 
+    ContextMenuType {
+        id: textAreaContextMenu
+    }
+
     property string placeholderText
     property string text
     property alias textArea: textArea
@@ -93,8 +97,19 @@ Rectangle {
 
                 wrapMode: Text.Wrap
 
-                ContextMenu.menu: ContextMenuType {
-                    textObj: textArea
+                TapHandler {
+                    acceptedButtons: Qt.RightButton
+                    onTapped: {
+                        textAreaContextMenu.textObj = textArea
+                        textAreaContextMenu.popup()
+                    }
+                }
+                Keys.onPressed: function (event) {
+                    if (event.key === Qt.Key_Menu) {
+                        textAreaContextMenu.textObj = textArea
+                        textAreaContextMenu.popup()
+                        event.accepted = true
+                    }
                 }
 
                 onFocusChanged: {
