@@ -5,6 +5,7 @@
 #include "configurators/ikev2_configurator.h"
 #include "configurators/openvpn_configurator.h"
 #include "configurators/shadowsocks_configurator.h"
+#include "configurators/ssh_tunnel_configurator.h"
 #include "configurators/wireguard_configurator.h"
 #include "configurators/xray_configurator.h"
 
@@ -25,6 +26,7 @@ QScopedPointer<ConfiguratorBase> VpnConfigurationsController::createConfigurator
     case Proto::Ikev2: return QScopedPointer<ConfiguratorBase>(new Ikev2Configurator(m_settings, m_serverController));
     case Proto::Xray: return QScopedPointer<ConfiguratorBase>(new XrayConfigurator(m_settings, m_serverController));
     case Proto::SSXray: return QScopedPointer<ConfiguratorBase>(new XrayConfigurator(m_settings, m_serverController));
+    case Proto::SshTunnel: return QScopedPointer<ConfiguratorBase>(new SshTunnelConfigurator(m_settings, m_serverController));
     default: return QScopedPointer<ConfiguratorBase>();
     }
 }

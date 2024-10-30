@@ -105,7 +105,9 @@ ErrorCode ServerController::runContainerScript(const ServerCredentials &credenti
         return e;
 
     QString runner =
-            QString("sudo docker exec -i $CONTAINER_NAME %2 %1 ").arg(fileName, (container == DockerContainer::Socks5Proxy ? "sh" : "bash"));
+            QString("sudo docker exec -i $CONTAINER_NAME %2 %1 ")
+                    .arg(fileName, ((container == DockerContainer::Socks5Proxy || container == DockerContainer::SshTunnel) ? "sh"
+                                                                                                                          : "bash"));
     e = runScript(credentials, replaceVars(runner, genVarsForScript(credentials, container)), cbReadStdOut, cbReadStdErr);
 
     QString remover = QString("sudo docker exec -i $CONTAINER_NAME rm %1 ").arg(fileName);
@@ -395,6 +397,13 @@ bool ServerController::isReinstallContainerRequired(DockerContainer container, c
         }
     }
 
+    if (container == DockerContainer::SshTunnel) {
+        if (oldProtoConfig.value(config_key::port).toString(protocols::sshTunnel::defaultPort)
+            != newProtoConfig.value(config_key::port).toString(protocols::sshTunnel::defaultPort)) {
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -558,6 +567,7 @@ ServerController::Vars ServerController::genVarsForScript(const ServerCredential
     const QJsonObject &xrayConfig = config.value(ProtocolProps::protoToString(Proto::Xray)).toObject();
     const QJsonObject &sftpConfig = config.value(ProtocolProps::protoToString(Proto::Sftp)).toObject();
     const QJsonObject &socks5ProxyConfig = config.value(ProtocolProps::protoToString(Proto::Socks5Proxy)).toObject();
+    const QJsonObject &sshTunnelConfig = config.value(ProtocolProps::protoToString(Proto::SshTunnel)).toObject();
 
     Vars vars;
 
@@ -674,8 +684,12 @@ ServerController::Vars ServerController::genVarsForScript(const ServerCredential
     vars.append({ { "$SOCKS5_USER", socks5user } });
     vars.append({ { "$SOCKS5_AUTH_TYPE", socks5user.isEmpty() ? "none" : "strong" } });
 
+    vars.append({ { "$SSH_TUNNEL_PORT", sshTunnelConfig.value(config_key::port).toString(protocols::sshTunnel::defaultPort) } });
+    vars.append({ { "$SSH_TUNNEL_USER", sshTunnelConfig.value(config_key::userName).toString(protocols::sshTunnel::defaultUserName) } });
+    vars.append({ { "$SSH_TUNNEL_PASSWORD", sshTunnelConfig.value(config_key::password).toString() } });
+
     QString serverIp = (!ContainerProps::isAwgContainer(container) && 
-        container != DockerContainer::WireGuard && container != DockerContainer::Xray)
+        container != DockerContainer::WireGuard && container != DockerContainer::Xray && container != DockerContainer::SshTunnel)
             ? NetworkUtilities::getIPAddress(credentials.hostName)
             : credentials.hostName;
     if (!serverIp.isEmpty()) {
