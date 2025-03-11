@@ -130,6 +130,13 @@ open class AmneziaVpnService : VpnService() {
 
             is UnknownHostException -> onError("Unknown host")
 
+            is java.io.IOException -> onError("Network error: ${e.message ?: e.javaClass.simpleName}")
+
+            is Exception -> {
+                Log.e(TAG, "VPN connection failed: $e")
+                onError("${e.javaClass.simpleName}: ${e.message ?: e.toString()}")
+            }
+
             else -> throw e
         }
     }

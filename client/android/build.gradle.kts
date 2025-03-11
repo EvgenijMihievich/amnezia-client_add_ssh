@@ -31,6 +31,10 @@ android {
     packaging {
         // compress .so binary libraries
         jniLibs.useLegacyPackaging = true
+        // bcprov / bcpkix / bcutil ship identical OSGi paths; merge would fail without pickFirst
+        resources {
+            pickFirsts += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+        }
     }
 
     defaultConfig {

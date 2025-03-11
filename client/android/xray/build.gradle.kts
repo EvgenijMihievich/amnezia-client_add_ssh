@@ -16,4 +16,9 @@ dependencies {
     compileOnly(project(":protocolApi"))
     implementation(project(":xray:libXray"))
     implementation(libs.kotlinx.coroutines)
+    implementation("com.hierynomus:sshj:0.37.0")
+    // Android's built-in "BC" is stripped (no X25519); sshj needs a full provider at runtime.
+    implementation("org.bouncycastle:bcprov-jdk18on:1.79")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.79")
+    implementation("org.slf4j:slf4j-nop:2.0.16")
 }

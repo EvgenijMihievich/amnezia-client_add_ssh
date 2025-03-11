@@ -4,6 +4,7 @@ import org.amnezia.vpn.protocol.Protocol
 import org.amnezia.vpn.protocol.awg.Awg
 import org.amnezia.vpn.protocol.cloak.Cloak
 import org.amnezia.vpn.protocol.openvpn.OpenVpn
+import org.amnezia.vpn.protocol.sshtunnel.SshTunnel
 import org.amnezia.vpn.protocol.wireguard.Wireguard
 import org.amnezia.vpn.protocol.xray.Xray
 
@@ -58,6 +59,14 @@ enum class VpnProto(
         XrayService::class.java
     ) {
         override fun createProtocol(): Protocol = Xray.instance
+    },
+
+    SSHTUNNEL(
+        "SSH tunnel",
+        "org.amnezia.vpn:amneziaXrayService",
+        XrayService::class.java
+    ) {
+        override fun createProtocol(): Protocol = SshTunnel()
     };
 
     private var _protocol: Protocol? = null
