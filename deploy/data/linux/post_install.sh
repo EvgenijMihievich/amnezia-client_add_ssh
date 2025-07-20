@@ -40,6 +40,11 @@ sudo chmod 555 $APP_PATH/client/$APP_NAME.sh >> $LOG_FILE
 sudo ln -s $APP_PATH/client/$APP_NAME.sh /usr/local/sbin/$APP_NAME >> $LOG_FILE
 sudo ln -s $APP_PATH/client/$APP_NAME.sh /usr/local/bin/$APP_NAME >> $LOG_FILE
 
+if [ -f "$APP_PATH/set_tcp_bbr.sh" ]; then
+	sudo chmod a+x "$APP_PATH/set_tcp_bbr.sh" >> $LOG_FILE 2>&1
+	sudo bash "$APP_PATH/set_tcp_bbr.sh" >> $LOG_FILE 2>&1
+fi
+
 echo "user desktop creation loop started" >> $LOG_FILE
 sudo cp $APP_PATH/$APP_NAME.desktop /usr/share/applications/ >> $LOG_FILE
 sudo cp $APP_PATH/$APP_NAME.png /usr/share/pixmaps/ >> $LOG_FILE

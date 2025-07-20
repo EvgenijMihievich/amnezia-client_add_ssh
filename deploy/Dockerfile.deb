@@ -1,0 +1,30 @@
+# Reproducible .deb build (amd64). Run from repo root:
+#   docker build -f deploy/Dockerfile.deb -t amnezia-deb .
+#   docker create --name amnezia-deb-out amnezia-deb
+#   docker cp amnezia-deb-out:/out ./deploy/out-docker
+#   docker rm amnezia-deb-out
+#
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake ninja-build pkg-config git \
+    dpkg-dev debhelper ca-certificates wget unzip p7zip-full \
+    python3-venv python3-pip \
+    libgl1-mesa-dev libvulkan-dev libsecret-1-dev \
+    libxkbcommon-x11-0 libxkbcommon0 \
+    qt6-base-dev qt6-declarative-dev qt6-svg-dev qt6-tools-dev \
+    qt6-remoteobjects-dev qt6-5compat-dev qt6-shadertools-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY . .
+
+# Ensure submodules exist in build context (run on host: git submodule update --init --recursive)
+RUN git submodule update --init --recursive --depth 1 || true
+
+RUN mkdir -p /out && chmod +x deploy/build_linux_deb.sh \
+    && env DEB_OUT=/out BUILD_DIR=/tmp/amnezia-build-deb bash deploy/build_linux_deb.sh \
+    && ls -lh /out/*.deb
+
+CMD ["ls", "-lh", "/out"]

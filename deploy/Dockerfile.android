@@ -1,0 +1,98 @@
+# Android APK (arm64-v8a, debug) — same idea as CI, but Android SDK/NDK берутся из готового образа CircleCI,
+# чтобы не качать cmdline-tools / sdkmanager из Google из твоего Dockerfile (часто ломается в сети).
+#
+# Готового образа «Qt 6 for Android + Amnezia» в одном месте нет — Qt ставим через aqt (как раньше).
+#
+# Перед сборкой (корень репы):
+#   git submodule update --init --recursive
+#
+# Сборка (первый раз долго тянет базу + Qt):
+#   docker pull cimg/android:2026.03.1-ndk
+#   docker build -f deploy/Dockerfile.android -t amnezia-android-apk .
+#
+# aqt и «WARNING: Connection to download.qt.io failed… Retrying with fallback» — нормально, идёт запасное зеркало.
+# Qt 6.7+ Android: метаданные в online/.../all_os/android/... — зеркало должно их отдавать полностью.
+# mirrors.ocf.berkeley.edu/qt/ для 6.10.1 давал неполный Updates.xml → «packages … not found»; дефолт — Tencent.
+#
+# Важно: в --build-arg QT_MIRROR=… подставляй только реальный URL зеркала (https://…/qt/ со слэшем в конце).
+# Фразы-заглушки из примеров вроде «твоё-зеркало» — не хосты; сборка упадёт, aqt уйдёт на fallback и может словить SSLError.
+#
+# Зеркала часто не отдают sha256 для Updates.xml → включаем INSECURE_NOT_FOR_PRODUCTION_ignore_hash в venv settings.ini.
+# aqtinstall 3.1.21 ломает второй install (android) из‑за UnboundLocalError в archives.py — нужен ≥3.2.1.
+#
+# APK в текущую папку:
+#   docker create --name amnezia-android-out amnezia-android-apk
+#   docker cp amnezia-android-out:/out/. .
+#   docker rm amnezia-android-out
+#
+# Образ базы (другой тег / если 2026.03.1 недоступен):
+#   docker build --build-arg ANDROID_CI_IMAGE=cimg/android:2026.03-ndk -f deploy/Dockerfile.android -t amnezia-android-apk .
+#
+# Другие варианты с предустановленным SDK (подставь свой тег, проверь ANDROID_HOME в их README):
+#   - ghcr.io/cirruslabs/android-sdk:33
+#   - reactnativecommunity/react-native-android (смотри актуальные теги)
+#
+# Release APK: переменные keystore как в client/android/build.gradle.kts; здесь по умолчанию debug.
+
+ARG ANDROID_CI_IMAGE=cimg/android:2026.03.1-ndk
+FROM ${ANDROID_CI_IMAGE}
+
+USER root
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8
+
+# cimg/android задаёт ANDROID_HOME=/home/circleci/android-sdk; выравниваем имена под deploy/build_android.sh
+ENV ANDROID_SDK_ROOT=/home/circleci/android-sdk \
+    ANDROID_HOME=/home/circleci/android-sdk
+
+# В ndk-варианте образа уже выставлены ANDROID_NDK_HOME / ANDROID_NDK_ROOT (см. CircleCI cimg-android ndk Dockerfile).
+ENV ANDROID_NDK_ROOT=${ANDROID_NDK_HOME}
+
+ARG QT_VERSION=6.10.1
+# Со слэшем в конце. OCF для Qt 6.10.1+ часто ломает разбор XML у aqt; CI Qt — другой контекст.
+ARG QT_MIRROR=https://mirrors.cloud.tencent.com/qt/
+ARG ANDROID_BUILD_PLATFORM=android-36
+
+ENV QT_VERSION=${QT_VERSION} \
+    QT_HOST_PATH=/opt/Qt/${QT_VERSION}/gcc_64 \
+    ANDROID_BUILD_PLATFORM=${ANDROID_BUILD_PLATFORM} \
+    QT_MIRROR=${QT_MIRROR}
+
+# aqt + минимальные либы под host-утилиты Qt / androiddeployqt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-venv \
+    libglib2.0-0 libfontconfig1 libxkbcommon0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/aqt-venv \
+    && /opt/aqt-venv/bin/pip install --no-cache-dir -U pip "aqtinstall>=3.2.1,<3.4" \
+    && _ini="$(/opt/aqt-venv/bin/python -c 'import pathlib, aqt; print(pathlib.Path(aqt.__file__).resolve().parent / "settings.ini")')" \
+    && sed -i 's/^INSECURE_NOT_FOR_PRODUCTION_ignore_hash[[:space:]]*:.*/INSECURE_NOT_FOR_PRODUCTION_ignore_hash : True/' "$_ini" \
+    && grep -E '^INSECURE_NOT_FOR_PRODUCTION_ignore_hash[[:space:]]*:[[:space:]]*True' "$_ini"
+
+ENV PATH="/opt/aqt-venv/bin:${PATH}"
+
+# Qt 6.7+ online metadata uses arch linux_gcc_64 (not gcc_64); install dir stays …/gcc_64 (aqt maps it).
+RUN aqt install-qt linux desktop "${QT_VERSION}" linux_gcc_64 \
+        -O /opt/Qt -b "${QT_MIRROR}" \
+        -m qtremoteobjects qt5compat qtimageformats qtshadertools \
+    && aqt install-qt linux android "${QT_VERSION}" android_arm64_v8a \
+        -O /opt/Qt -b "${QT_MIRROR}" \
+        -m qtremoteobjects qt5compat qtimageformats qtshadertools \
+    && chmod +x "/opt/Qt/${QT_VERSION}/android_arm64_v8a/bin/qt-cmake"
+
+WORKDIR /src
+COPY . .
+
+RUN git submodule update --init --recursive --depth 1 || true
+
+ENV MOVE_RESULT=1
+
+RUN chmod +x deploy/build_android.sh \
+    && deploy/build_android.sh --apk arm64-v8a --debug --build-platform "${ANDROID_BUILD_PLATFORM}" -m
+
+RUN mkdir -p /out \
+    && cp -v /src/deploy/build/*.apk /out/ \
+    && ls -lh /out
+
+CMD ["ls", "-lh", "/out"]
