@@ -245,12 +245,12 @@ bool RouterLinux::deleteTun(const QString &dev)
         unsigned char    data[64];
     } req;
     struct rtattr *rta;
-    int ret, rtnl;
+    int rtnl;
 
     rtnl = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
     if (rtnl < 0) {
         qDebug().noquote() << "can't open rtnl: " << errno;
-        return 1;
+        return false;
     }
 
     memset(&req, 0, sizeof(req));
@@ -266,14 +266,21 @@ bool RouterLinux::deleteTun(const QString &dev)
     req.nh.nlmsg_len += rta->rta_len;
     memcpy(RTA_DATA(rta), dev.toStdString().c_str(), IFNAMSIZ);
 
-    ret = send(rtnl, &req, req.nh.nlmsg_len, 0);
-    if (ret < 0)
-        qDebug().noquote() << "can't send: errno";
-    ret = (unsigned int)ret != req.nh.nlmsg_len;
+    const ssize_t sent = ::send(rtnl, &req, req.nh.nlmsg_len, 0);
+    if (sent < 0) {
+        qDebug().noquote() << "deleteTun: send RTM_DELLINK failed, errno" << errno;
+        ::close(rtnl);
+        return false;
+    }
+    if (static_cast<size_t>(sent) != req.nh.nlmsg_len) {
+        qDebug().noquote() << "deleteTun: partial send" << sent << "expected" << req.nh.nlmsg_len;
+        ::close(rtnl);
+        return false;
+    }
 
-    close(rtnl);
-    qDebug().noquote() << "deleteTun ret" << ret;
-    return ret;
+    ::close(rtnl);
+    qDebug().noquote() << "deleteTun: sent RTM_DELLINK for" << dev;
+    return true;
 }
 
 bool RouterLinux::updateResolvers(const QString& ifname, const QList<QHostAddress>& resolvers)
